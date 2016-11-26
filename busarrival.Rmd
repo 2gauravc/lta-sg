@@ -1,14 +1,38 @@
+---
+title: "LTA Bus Arrival"
+author: "Gaurav Chaturvedi"
+date: "9/21/2016"
+output: html_document
+---
 
-library(httr)
-library(knitr)
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+suppressPackageStartupMessages(library(httr)) 
+suppressPackageStartupMessages(library(knitr))
+```
 
-baseurl <- "http://datamall2.mytransport.sg/ltaodataservice/BusArrival?BusStopID=11099&SST=True"
+## What we are trying to do 
+
+We will access the LTA Datamall APIs to get bus arrival information at a given bus stop. 
+
+
+```{r load, echo=TRUE}
+
+bus_stop <- '11099' #Spanish Village at Farrer Road
+baseurl <- sprintf("http://datamall2.mytransport.sg/ltaodataservice/BusArrival?BusStopID=%s&SST=True", bus_stop)
 acc_key <- "7HYNDi9gRQ6yVg/S42ErLw=="
 uuid <- '1bfc9ce5-3e1d-473b-8b57-4bac103231b2'
 
 req <- GET(baseurl, add_headers(AccountKey = acc_key, UniqueUserID = uuid))
 ans <- content(req)
 
+```
+
+Found information on `r length(ans[[3]])` bus services at stop number `r sprintf("%s\n", bus_stop)`
+
+## Next / Sub Bus Arrival Times 
+
+```{r show, echo=TRUE}
 num_bus <- length(ans[[3]])
 
 serv_no <- vector(mode="character", length = num_bus)
@@ -34,4 +58,6 @@ time_diff1 <- round(difftime(sub_time1, time_now, units = "mins"),0)
 
 bus_arr <- data.frame(serv_no = serv_no, status = in_serv, next_bus = time_diff, sub_bus = time_diff1)
 
-kable(bus_arr)
+kable(bus_arr, format = "markdown")
+
+```

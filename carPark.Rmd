@@ -1,0 +1,70 @@
+---
+title: "Car Park Availability - LTA"
+author: "Gaurav Chaturvedi"
+date: "11/8/2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(httr)
+library(rCharts)
+```
+
+## The Problem 
+
+1. Use the car Park Availability API and plot it on a map. Color the markers according to availability.
+
+2. Draw a Gauge (refer ggvis) by Area. Color the gauge sections by availability (similar to above)
+
+
+## Read in the Data 
+
+```{r read_in}
+acc_key <- "7HYNDi9gRQ6yVg/S42ErLw=="
+uuid <- '1bfc9ce5-3e1d-473b-8b57-4bac103231b2'
+
+baseurl <- "http://datamall2.mytransport.sg/ltaodataservice/CarParkAvailability?$skip=%s"
+req <- GET(baseurl, add_headers(AccountKey = acc_key, UniqueUserID = uuid))
+ans <-  content(req)$value
+
+num_cp <- length(ans)
+
+cp_avl <- data.frame(matrix(unlist(ans), ncol=6, byrow=T), stringsAsFactors=FALSE)
+names(cp_avl) <- c("cpId", "cpArea", "cpDev", "cpLat", "cpLon", "cpLots")
+
+```
+
+```{r draw_map_1col}
+map <- Leaflet$new()
+map$setView(c(median(as.numeric(cp_avl$cpLat)), median(as.numeric(cp_avl$cpLon))), zoom = 10)
+#map$tileLayer(provider = 'Stamen.Watercolor')
+cp_avl$cpLots <- as.numeric(cp_avl$cpLots)
+
+for (i in 1: num_cp){
+  map$marker(c(cp_avl$cpLat[i], cp_avl$cpLon[i]), bindPopup = cp_avl$cpDev[i])
+}
+
+map
+```
+
+```{r draw_map_mcol}
+library(lefaf)
+mutate(quakes, group = cut(mag, breaks = c(0, 5, 6, Inf), labels = c("blue", "green", "orange"))) -> mydf
+
+### I edit this png file and created my own marker.
+### https://raw.githubusercontent.com/lvoogdt/Leaflet.awesome-markers/master/dist/images/markers-soft.png
+quakeIcons <- iconList(blue = makeIcon("/Users/jazzurro/Documents/Stack Overflow/blue.png", iconWidth = 24, iconHeight =32),
+                       green = makeIcon("/Users/jazzurro/Documents/Stack Overflow/green.png", iconWidth = 24, iconHeight =32),
+                       orange = makeIcon("/Users/jazzurro/Documents/Stack Overflow/orange.png", iconWidth = 24, iconHeight =32))
+
+
+leaflet(data = mydf[1:100,]) %>% 
+addTiles() %>%
+addMarkers(icon = ~quakeIcons[group])
+```
+
+```{r draw_map_mcol}
+library(ggvis)
+
+```
